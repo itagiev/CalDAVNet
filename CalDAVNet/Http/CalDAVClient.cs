@@ -1,7 +1,6 @@
+using System.Net;
 using System.Text;
 using System.Xml.Linq;
-
-using CalDAVNet.Response;
 
 namespace CalDAVNet;
 
@@ -32,7 +31,7 @@ public class CalDAVClient : ICalDAVClient
         response.EnsureSuccessStatusCode();
     }
 
-    public async Task<ClientItemResponse<string>> GetPrincipalNameAsync(CancellationToken cancellationToken = default)
+    public async Task<GetPrincipalNameResponse> GetPrincipalNameAsync(CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(ICalDAVClient.Propfind, "")
         {
@@ -42,15 +41,11 @@ public class CalDAVClient : ICalDAVClient
         .WithPrefer("return-minimal");
 
         var response = await SendForMultistatusAsync(request, cancellationToken).ConfigureAwait(false);
-
-        return (response.FirstOrDefault() is MultistatusItem item
-            && item.Properties.TryGetValue(XNames.CurrentUserPrincipal, out var principal)
-            && principal.IsSuccessStatusCode)
-            ? new ClientItemResponse<string>(principal.Prop.Value)
-            : new ClientItemResponse<string>(ClientResult.Error, ClientError.Failure, "Failed to retrieve principal name.");
+        var item = response.Single();
+        return item.ToGetPrincipalNameResponse();
     }
 
-    public async Task<ClientItemResponse<Principal>> GetPrincipalAsync(string upn, CancellationToken cancellationToken = default)
+    public async Task<GetPrincipalResponse> GetPrincipalAsync(string upn, CancellationToken cancellationToken = default)
     {
         var body = BodyHelper.AllPropPropfind();
 
@@ -59,13 +54,11 @@ public class CalDAVClient : ICalDAVClient
             .WithPrefer("return-minimal");
 
         var response = await SendForMultistatusAsync(request, cancellationToken).ConfigureAwait(false);
-
-        return (response.FirstOrDefault() is MultistatusItem item && item.IsSuccessStatusCode)
-            ? new ClientItemResponse<Principal>(new Principal(item))
-            : new ClientItemResponse<Principal>(ClientResult.Error, ClientError.Failure, $"Failed to retrieve principal.");
+        var item = response.Single();
+        return item.ToGetPrincipalResponse();
     }
 
-    public async Task<ClientResponseCollection<ClientItemResponse<Calendar>>> GetCalendarsAsync(string href, XDocument body, CancellationToken cancellationToken = default)
+    public async Task<ClientResponseCollection<GetCalendarResponse>> GetCalendarsAsync(string href, XDocument body, CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(ICalDAVClient.Propfind, href)
         {
@@ -76,7 +69,7 @@ public class CalDAVClient : ICalDAVClient
 
         var response = await SendForMultistatusAsync(request, cancellationToken).ConfigureAwait(false);
 
-        ClientResponseCollection<ClientItemResponse<Calendar>> result = [];
+        ClientResponseCollection<GetCalendarResponse> result = [];
 
         foreach (var item in response)
         {
@@ -85,20 +78,13 @@ public class CalDAVClient : ICalDAVClient
                 continue;
             }
 
-            if (item.IsSuccessStatusCode)
-            {
-                result.Add(new ClientItemResponse<Calendar>(new Calendar(item)));
-            }
-            else
-            {
-                result.Add(new ClientItemResponse<Calendar>(ClientResult.Error, ClientError.Failure, $"Failed to retrieve calendars."));
-            }
+            result.Add(item.ToGetCalendarResponse());
         }
 
         return result;
     }
 
-    public async Task<ClientItemResponse<Calendar>> GetCalendarAsync(string href, XDocument body, CancellationToken cancellationToken = default)
+    public async Task<GetCalendarResponse> GetCalendarAsync(string href, XDocument body, CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(ICalDAVClient.Propfind, href)
         {
@@ -107,13 +93,17 @@ public class CalDAVClient : ICalDAVClient
         .WithDepth(0)
         .WithPrefer("return-minimal");
 
-        var response = await SendForMultistatusAsync(request, cancellationToken).ConfigureAwait(false);
-
-        return (response.FirstOrDefault() is MultistatusItem item
-            && item.IsCalendar
-            && item.IsSuccessStatusCode)
-            ? new ClientItemResponse<Calendar>(new Calendar(item))
-            : new ClientItemResponse<Calendar>(ClientResult.Error, ClientError.Failure, $"Failed to retrieve calendar.");
+        try
+        {
+            var response = await SendForMultistatusAsync(request, cancellationToken).ConfigureAwait(false);
+            var item = response.Where(x => x.IsCalendar).Single();
+            return item.ToGetCalendarResponse();
+        }
+        // TODO: реализовать это и в других методах
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return GetCalendarResponse.NotFound(href);
+        }
     }
 
     public Task CreateCalendarAsync(string href, XDocument body, CancellationToken cancellationToken = default)
@@ -139,7 +129,7 @@ public class CalDAVClient : ICalDAVClient
         return SendAsync(request, cancellationToken);
     }
 
-    public async Task<ClientResponseCollection<ClientItemResponse<Event>>> GetEventsAsync(string href, XDocument body, CancellationToken cancellationToken = default)
+    public async Task<ClientResponseCollection<GetEventResponse>> GetEventsAsync(string href, XDocument body, CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(ICalDAVClient.Report, href)
         {
@@ -150,24 +140,17 @@ public class CalDAVClient : ICalDAVClient
 
         var response = await SendForMultistatusAsync(request, cancellationToken).ConfigureAwait(false);
 
-        ClientResponseCollection<ClientItemResponse<Event>> result = [];
+        ClientResponseCollection<GetEventResponse> result = [];
 
         foreach (var item in response)
         {
-            if (item.IsSuccessStatusCode)
-            {
-                result.Add(new ClientItemResponse<Event>(new Event(item)));
-            }
-            else
-            {
-                result.Add(new ClientItemResponse<Event>(ClientResult.Error, ClientError.Failure, $"Failed to retrieve events."));
-            }
+            result.Add(item.ToGetEventResponse());
         }
 
         return result;
     }
 
-    public async Task<ClientItemResponse<Event>> GetEventAsync(string href, XDocument body,
+    public async Task<GetEventResponse> GetEventAsync(string href, XDocument body,
         CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(ICalDAVClient.Report, href)
@@ -178,13 +161,11 @@ public class CalDAVClient : ICalDAVClient
         .WithPrefer("return-minimal");
 
         var response = await SendForMultistatusAsync(request, cancellationToken).ConfigureAwait(false);
-
-        return (response.FirstOrDefault() is MultistatusItem item && item.IsSuccessStatusCode)
-            ? new ClientItemResponse<Event>(new Event(item))
-            : new ClientItemResponse<Event>(ClientResult.Error, ClientError.Failure, $"Failed to retrieve event.");
+        var item = response.Single();
+        return item.ToGetEventResponse();
     }
 
-    public Task<ClientItemResponse<Event>> GetEventAsync(string calendarHref, string eventHref,
+    public Task<GetEventResponse> GetEventAsync(string calendarHref, string eventHref,
         CancellationToken cancellationToken = default)
         => GetEventAsync(calendarHref, BodyHelper.CalendarMultiget(eventHref), cancellationToken);
 

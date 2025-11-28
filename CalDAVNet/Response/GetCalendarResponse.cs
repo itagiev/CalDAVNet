@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace CalDAVNet.Response;
+namespace CalDAVNet;
 
 public sealed class GetCalendarResponse : ClientResponse
 {
@@ -11,7 +11,16 @@ public sealed class GetCalendarResponse : ClientResponse
 
     public Calendar? Calendar { get; init; }
 
-    internal GetCalendarResponse()
+    internal GetCalendarResponse() { }
+
+    internal static GetCalendarResponse NotFound(string href)
     {
+        return new GetCalendarResponse
+        {
+            Href = href,
+            Result = ClientResult.Error,
+            ErrorCode = ResponseMappings.StatusCodeToClientError(404),
+            ErrorMessage = ResponseMappings.StatusCodeToErrorMessage(404)
+        };
     }
 }

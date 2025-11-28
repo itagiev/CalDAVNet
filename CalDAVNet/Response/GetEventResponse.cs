@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace CalDAVNet.Response;
+namespace CalDAVNet;
 
 public sealed class GetEventResponse : ClientResponse
 {
@@ -11,7 +11,5 @@ public sealed class GetEventResponse : ClientResponse
 
     public Event? Event { get; init; }
 
-    internal GetEventResponse()
-    {
-    }
+    internal GetEventResponse() { }
 }

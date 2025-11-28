@@ -12,15 +12,5 @@ public class ClientResponse
 
     public virtual bool IsSuccess => Result == ClientResult.Success;
 
-    internal ClientResponse()
-    {
-    }
-
-    internal ClientResponse(ClientResult result = ClientResult.Success, ClientError errorCode = ClientError.NoError, string? errorMessage = null, Exception? exception = null)
-    {
-        Result = result;
-        ErrorCode = errorCode;
-        ErrorMessage = errorMessage;
-        Exception = exception;
-    }
+    internal ClientResponse() { }
 }

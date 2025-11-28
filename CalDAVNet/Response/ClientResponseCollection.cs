@@ -14,9 +14,7 @@ public sealed class ClientResponseCollection<TResponse> : IEnumerable<TResponse>
 
     public ClientResult OverallResult => overallResult;
 
-    internal ClientResponseCollection()
-    {
-    }
+    internal ClientResponseCollection() { }
 
     internal void Add(TResponse response)
     {
@@ -30,7 +28,7 @@ public sealed class ClientResponseCollection<TResponse> : IEnumerable<TResponse>
 
     public IEnumerator<TResponse> GetEnumerator()
     {
-        throw new NotImplementedException();
+        return _responses.GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
