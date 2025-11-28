@@ -1,16 +1,9 @@
 using System.Xml.Linq;
 
-using Ical.Net.CalendarComponents;
-using Ical.Net.Serialization;
-
 namespace CalDAVNet;
 
 public class Calendar
 {
-    internal static readonly CalendarSerializer CalendarSerializer = new CalendarSerializer();
-
-    private readonly Ical.Net.Calendar _calendar;
-
     private string? _displayName;
     private string? _description;
     private string? _color;
@@ -137,78 +130,14 @@ public class Calendar
 
     public IReadOnlyDictionary<XName, PropResponse> Properties { get; }
 
-    public Calendar(MultistatusEntry entry)
+    public Calendar(MultistatusItem item)
     {
-        Href = entry.Href;
-        Properties = entry.Properties;
-        _calendar = new Ical.Net.Calendar();
-    }
-
-    public async Task<Event?> CreateEventAsync(CalDAVClient client, CalendarEvent calendarEvent, CancellationToken cancellationToken = default)
-    {
-        _calendar.Events.Clear();
-        _calendar.Events.Add(calendarEvent);
-
-        var eventHref = $"{Href}{calendarEvent.Uid}.ics";
-
-        var createResult = await client.CreateEventAsync(eventHref,
-            CalendarSerializer.SerializeToString(_calendar)!,
-            cancellationToken);
-
-        return await GetEventAsync(client, eventHref, cancellationToken);
-    }
-
-    public async Task<Event?> CreateEventAsync(CalDAVClient client, Ical.Net.Calendar calendar, CancellationToken cancellationToken = default)
-    {
-        var calendarEvent = calendar.Events[0]!;
-        var eventHref = $"{Href}{calendarEvent.Uid}.ics";
-
-        var createResult = await client.CreateEventAsync(eventHref,
-            CalendarSerializer.SerializeToString(calendar)!,
-            cancellationToken);
-
-        return await GetEventAsync(client, eventHref, cancellationToken);
+        Href = item.Href;
+        Properties = item.Properties;
     }
 
     public bool IsComponentSupported(CalendarComponent component)
     {
         return (component & SupportedCalendarComponentSet) == component;
-    }
-
-    public Task<List<Event>> GetEventsAsync(CalDAVClient client, XDocument body, CancellationToken cancellationToken = default)
-    {
-        return client.GetEventsAsync(Href, body, cancellationToken);
-    }
-
-    public Task<Event?> GetEventAsync(CalDAVClient client, XDocument body, CancellationToken cancellationToken = default)
-    {
-        return client.GetEventAsync(Href, body, cancellationToken);
-    }
-
-    public Task<Event?> GetEventAsync(CalDAVClient client, string eventHref, CancellationToken cancellationToken = default)
-    {
-        return client.GetEventAsync(Href, eventHref, cancellationToken);
-    }
-
-    public Task<SyncItemCollection> SyncItemsAsync(CalDAVClient client, string? syncToken,
-        CancellationToken cancellationToken = default)
-    {
-        return client.SyncCalendarItemsAsync(Href, syncToken, cancellationToken);
-    }
-
-    public Task<bool> UpdateAsync(CalDAVClient client, XDocument body, CancellationToken cancellationToken = default)
-    {
-        if (Ctag is null)
-            throw new InvalidOperationException("Ctag was not loaded.");
-
-        return client.UpdateCalendarAsync(Href, Ctag, body, cancellationToken);
-    }
-
-    public Task<bool> DeleteAsync(CalDAVClient client, CancellationToken cancellationToken = default)
-    {
-        if (Ctag is null)
-            throw new InvalidOperationException("Ctag was not loaded.");
-
-        return client.DeleteAsync(Href, Ctag, cancellationToken);
     }
 }

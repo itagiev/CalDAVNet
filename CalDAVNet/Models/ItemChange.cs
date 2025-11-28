@@ -2,7 +2,7 @@ using System.Xml.Linq;
 
 namespace CalDAVNet;
 
-public class SyncItem
+public class ItemChange
 {
     private string? _etag;
 
@@ -31,10 +31,10 @@ public class SyncItem
 
     public bool IsSuccessStatusCode => StatusCode >= 200 && StatusCode <= 299;
 
-    public SyncItem(MultistatusEntry entry)
+    internal ItemChange(MultistatusItem item)
     {
-        Href = entry.Href;
-        StatusCode = entry.StatusCode;
-        Properties = entry.Properties;
+        Href = item.Href;
+        StatusCode = item.StatusCode;
+        Properties = item.Properties;
     }
 }

@@ -41,9 +41,9 @@ public class Principal
 
     public IReadOnlyDictionary<XName, PropResponse> Properties { get; }
 
-    public Principal(MultistatusEntry entry)
+    public Principal(MultistatusItem item)
     {
-        Href = entry.Href;
-        Properties = entry.Properties;
+        Href = item.Href;
+        Properties = item.Properties;
     }
 }

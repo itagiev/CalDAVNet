@@ -45,12 +45,12 @@ public class Event
 
     public Ical.Net.CalendarComponents.CalendarEvent? ICalEvent { get; }
 
-    public Event(MultistatusEntry entry)
+    public Event(MultistatusItem item)
     {
-        Href = entry.Href;
-        Properties = entry.Properties;
+        Href = item.Href;
+        Properties = item.Properties;
 
-        if (!string.IsNullOrEmpty(CalendarData))
+        if (!string.IsNullOrWhiteSpace(CalendarData))
         {
             ICalCalendar = Ical.Net.Calendar.Load(CalendarData);
             if (ICalCalendar is not null)
@@ -58,26 +58,5 @@ public class Event
                 ICalEvent = ICalCalendar.Events.SingleOrDefault();
             }
         }
-    }
-
-    public Task<bool> UpdateAsync(CalDAVClient client, CancellationToken cancellationToken = default)
-    {
-        if (Etag is null || CalendarData is null)
-            throw new InvalidOperationException("Etag or calendar data was not loaded.");
-
-        return client.UpdateEventAsync(Href, Etag, Serialize()!, cancellationToken);
-    }
-
-    public Task<bool> DeleteAsync(CalDAVClient client, CancellationToken cancellationToken = default)
-    {
-        if (Etag is null)
-            throw new InvalidOperationException("Etag was not loaded.");
-
-        return client.DeleteAsync(Href, Etag, cancellationToken);
-    }
-
-    public string? Serialize()
-    {
-        return Calendar.CalendarSerializer.SerializeToString(ICalCalendar);
     }
 }

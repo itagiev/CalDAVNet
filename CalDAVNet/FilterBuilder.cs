@@ -70,6 +70,4 @@ public class CompFilterBuilder
 
         return this;
     }
-
-    // TODO: Add more component filters
 }

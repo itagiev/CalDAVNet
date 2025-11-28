@@ -7,7 +7,7 @@ public static class XElementExtensions
 {
     private static readonly Regex StatusCodeRegex = new Regex(@"\b(\d{3})\b", RegexOptions.Compiled);
 
-    public static int GetStatusCodeOrDefault(this XElement element, int @default = -1)
+    public static int GetStatusCodeOrDefault(this XElement element, int @default)
     {
         string? status = element.Element(XNames.Status)?.Value;
 
