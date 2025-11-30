@@ -99,7 +99,6 @@ public class CalDAVClient : ICalDAVClient
             var item = response.Where(x => x.IsCalendar).Single();
             return item.ToGetCalendarResponse();
         }
-        // TODO: реализовать это и в других методах
         catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
             return GetCalendarResponse.NotFound(href);
