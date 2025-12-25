@@ -27,6 +27,7 @@ public static class Constants
         public const string ResourceType = "resourcetype";
         public const string Response = "response";
         public const string Set = "set";
+        public const string Remove = "remove";
         public const string Status = "status";
         public const string SyncCollection = "sync-collection";
         public const string SyncLevel = "sync-level";
@@ -141,6 +142,8 @@ public static class XNames
     public static XName Response => XName.Get(Constants.DAV.Response, Constants.DAV.Namespace);
 
     public static XName Set => XName.Get(Constants.DAV.Set, Constants.DAV.Namespace);
+
+    public static XName Remove => XName.Get(Constants.DAV.Remove, Constants.DAV.Namespace);
 
     public static XName Status => XName.Get(Constants.DAV.Status, Constants.DAV.Namespace);
 
