@@ -185,7 +185,9 @@ class Program
         }
 
         // TEST: Sync
-        //var syncItemCollection = await defaultCalendar.SyncItemsAsync(client, null);
+        Console.WriteLine("\n-----------------------------------------");
+        Console.WriteLine("Sync test\n");
+        await ProcessSyncTest(client, defaultCalendar);
 
         //foreach (var e in syncItemCollection)
         //{
@@ -370,5 +372,54 @@ class Program
         string wrongCalendarId = "my-wrong-calendar-id";
 
         var calendarResponse = await client.GetCalendarAsync(wrongCalendarId, BodyHelper.Propfind([XNames.ResourceType, XNames.GetCtag, XNames.SyncToken, XNames.DisplayName]));
+    }
+
+    static async Task ProcessSyncTest(CalDAVClient client, Calendar calendar)
+    {
+        // sync-token:1 1768221209000
+        // sync-token:1 1768221327000
+        // sync-token:1 1768221327000
+
+        var changes = await client.SyncCalendarItemsAsync(calendar.Href, "sync-token:1 1768221209000");
+
+        Console.WriteLine(changes.SyncToken);
+
+        foreach (var change in changes)
+        {
+            Console.WriteLine($"""
+                Status code: {change.StatusCode}
+                Href: {change.Href}
+                Etag: {change.Etag}
+
+                """);
+        }
+
+        var eventResponses = await client.GetEventsAsync(calendar.Href, BodyHelper.CalendarMultiget(changes.Select(x => x.Href)));
+
+        if (eventResponses.Count > 0)
+        {
+            foreach (var response in eventResponses)
+            {
+                if (response.IsSuccess)
+                {
+                    var @event = response.Event;
+                    if (@event.ICalCalendar is not null)
+                    {
+                        Console.Write($"Events count: {@event.ICalCalendar.Events.Count}");
+
+                        if (@event.ICalEvent is not null)
+                        {
+                            Console.Write($" Summary: {@event.ICalEvent.Summary}");
+                        }
+
+                        Console.WriteLine();
+                    }
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine("Calendar has no events");
+        }
     }
 }

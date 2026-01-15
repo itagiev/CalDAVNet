@@ -211,7 +211,10 @@ public class CalDAVClient : ICalDAVClient
 
         var response = await SendForMultistatusAsync(request, cancellationToken).ConfigureAwait(false);
 
-        ChangeCollection result = [];
+        ChangeCollection result = new ChangeCollection()
+        {
+            SyncToken = response.SyncToken
+        };
 
         foreach (var item in response)
         {
