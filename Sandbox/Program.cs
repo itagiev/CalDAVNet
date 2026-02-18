@@ -115,7 +115,9 @@ class Program
 
         // TEST: Getting calendars
         var calendarResponseCollection = await client.GetCalendarsAsync(principal.CalendarHomeSet!,
-            BodyHelper.Propfind([], [XNames.ResourceType, XNames.GetCtag, XNames.SyncToken, XNames.SupportedCalendarComponentSet, XNames.DisplayName]));
+            BodyHelper.Propfind(
+                [],
+                [XNames.ResourceType, XNames.GetCtag, XNames.SyncToken, XNames.SupportedCalendarComponentSet, XNames.DisplayName, XNames.CurrentUserPrivilegeSet]));
 
         Console.WriteLine();
         if (calendarResponseCollection.Count > 0)
@@ -127,7 +129,7 @@ class Program
                 if (response.IsSuccess)
                 {
                     var calendar = response.Calendar;
-                    Console.WriteLine($"{calendar.DisplayName} - {calendar.Href}");
+                    Console.WriteLine($"{calendar.DisplayName} - {calendar.Href}. Privileges: {calendar.CurrentUserPrivilegeSet}");
                 }
                 else
                 {
@@ -185,9 +187,9 @@ class Program
         }
 
         // TEST: Sync
-        Console.WriteLine("\n-----------------------------------------");
-        Console.WriteLine("Sync test\n");
-        await ProcessSyncTest(client, defaultCalendar);
+        //Console.WriteLine("\n-----------------------------------------");
+        //Console.WriteLine("Sync test\n");
+        //await ProcessSyncTest(client, defaultCalendar);
 
         //foreach (var e in syncItemCollection)
         //{

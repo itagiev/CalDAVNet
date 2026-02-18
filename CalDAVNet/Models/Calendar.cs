@@ -10,6 +10,7 @@ public class Calendar
     private string? _ctag;
     private string? _syncToken;
     private CalendarComponent _supportedCalendarComponentSet = CalendarComponent.None;
+    private CurrentUserPrivilegeSet _currentUserPrivilegeSet = CurrentUserPrivilegeSet.None;
 
     public string? DisplayName
     {
@@ -75,8 +76,8 @@ public class Calendar
     {
         get
         {
-            if (_syncToken is
-                null && Properties.TryGetValue(XNames.SyncToken, out var prop)
+            if (_syncToken is null
+                && Properties.TryGetValue(XNames.SyncToken, out var prop)
                 && prop.IsSuccessStatusCode)
             {
                 _syncToken = prop.Prop.Value;
@@ -123,6 +124,66 @@ public class Calendar
             }
 
             return _supportedCalendarComponentSet;
+        }
+    }
+
+    public CurrentUserPrivilegeSet CurrentUserPrivilegeSet
+    {
+        get
+        {
+            if (_currentUserPrivilegeSet == CurrentUserPrivilegeSet.None
+                && Properties.TryGetValue(XNames.CurrentUserPrivilegeSet, out var prop)
+                && prop.IsSuccessStatusCode)
+            {
+                foreach (var priv in prop.Prop.Elements(XNames.Privilege))
+                {
+                    switch (priv.Elements().Single().Name.LocalName)
+                    {
+                        case Constants.DAV.Read:
+                            _currentUserPrivilegeSet |= CurrentUserPrivilegeSet.Read;
+                            break;
+
+                        case Constants.Cal.ReadFreeBusy:
+                            _currentUserPrivilegeSet |= CurrentUserPrivilegeSet.ReadFreeBusy;
+                            break;
+
+                        case Constants.DAV.Write:
+                            _currentUserPrivilegeSet |= CurrentUserPrivilegeSet.Write;
+                            break;
+
+                        case Constants.DAV.WriteContent:
+                            _currentUserPrivilegeSet |= CurrentUserPrivilegeSet.WriteContent;
+                            break;
+
+                        case Constants.DAV.WriteProperties:
+                            _currentUserPrivilegeSet |= CurrentUserPrivilegeSet.WriteProperties;
+                            break;
+
+                        case Constants.DAV.Bind:
+                            _currentUserPrivilegeSet |= CurrentUserPrivilegeSet.Bind;
+                            break;
+
+                        case Constants.DAV.Unbind:
+                            _currentUserPrivilegeSet |= CurrentUserPrivilegeSet.Unbind;
+                            break;
+
+                        case Constants.DAV.ReadAcl:
+                            _currentUserPrivilegeSet |= CurrentUserPrivilegeSet.ReadAcl;
+                            break;
+
+                        case Constants.DAV.WriteAcl:
+                            _currentUserPrivilegeSet |= CurrentUserPrivilegeSet.ReadAcl;
+                            break;
+
+                        case Constants.DAV.All:
+                            _currentUserPrivilegeSet |= CurrentUserPrivilegeSet.Read;
+                            break;
+                        default: break;
+                    }
+                }
+            }
+
+            return _currentUserPrivilegeSet;
         }
     }
 
